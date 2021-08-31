@@ -4,19 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Hero.generated.h"
+#include "AIController.h"
 
-class UCameraComponent;
-class USpringArmComponent;
+#include "Enemy.generated.h"
 
 UCLASS()
-class LEARNUE4_API AHero : public ACharacter
+class LEARNUE4_API AEnemy : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	AHero();
+	AEnemy();
 
 protected:
 	// Called when the game starts or when spawned
@@ -29,34 +28,37 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
+	UFUNCTION(BlueprintCallable)
+		void Born();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		UCameraComponent* m_FollowedCamera;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		USpringArmComponent* m_CameraBoom;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float m_RunSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float m_WalkSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float m_CrouchedSpeed;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool b_IsRunning = false;
+	UFUNCTION(BlueprintCallable)
+		void OnReachDestination(FAIRequestID requestID, EPathFollowingResult::Type result);
 
 public:
 
-	UFUNCTION()
-		void MoveForward(float axis);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FVector m_StartPos;
 
-	UFUNCTION()
-		void MoveRight(float axis);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FVector m_EndPos;
 
-	UFUNCTION()
-		void SwitchWalkAndRun();
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		int32 m_SectionNumber;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		float m_MaxIdleTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		float m_MinIdleTime;
+
+private:
+	//hold positions between start position & end position
+	TArray<FVector> m_PosList;
+
+	//hold index of current position (start from 0)
+	int32 m_ListIndex;
+
+	void MoveToNext();
+
+	AAIController* m_AIController;
 };

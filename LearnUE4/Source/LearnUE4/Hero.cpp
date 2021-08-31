@@ -73,6 +73,7 @@ void AHero::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	PlayerInputComponent->BindAction("Walk&Run", IE_Pressed, this, &AHero::SwitchWalkAndRun);
 }
 
 void AHero::MoveForward(float axis)
@@ -99,5 +100,11 @@ void AHero::MoveRight(float axis)
 
 		AddMovementInput(dir, axis);
 	}
+}
+
+void AHero::SwitchWalkAndRun()
+{
+	b_IsRunning = !b_IsRunning;
+	GetCharacterMovement()->MaxWalkSpeed = b_IsRunning ? m_RunSpeed : m_WalkSpeed;
 }
 
