@@ -59,4 +59,6 @@ public:
 
 	UFUNCTION()
 		void SwitchWalkAndRun();
+
+
 };

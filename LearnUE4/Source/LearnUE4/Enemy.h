@@ -8,6 +8,8 @@
 
 #include "Enemy.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(MyLog, Log, All);
+
 UCLASS()
 class LEARNUE4_API AEnemy : public ACharacter
 {
@@ -61,4 +63,6 @@ private:
 	void MoveToNext();
 
 	AAIController* m_AIController;
+
+	FTimerHandle m_IdleTimer;
 };

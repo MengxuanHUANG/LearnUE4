@@ -3,6 +3,11 @@
 
 #include "Enemy.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "DrawDebugHelpers.h"
+
+#define DEMO_ENEMY_SIGHT_LENGTH 100
+DEFINE_LOG_CATEGORY(MyLog);
 
 // Sets default values
 AEnemy::AEnemy()
@@ -43,7 +48,57 @@ void AEnemy::Born()
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	const FVector startPos = GetActorLocation();
+	const FRotator rotation = GetActorRotation();
 
+	FVector direction = FRotationMatrix(rotation).GetUnitAxis(EAxis::X);
+	direction = direction.RotateAngleAxis(-45.f, FRotationMatrix(rotation).GetUnitAxis(EAxis::Z));
+	float angleOffset = -45.f;
+	const float angleStep = 1.f;
+
+	TArray<AActor*> ignoreList;
+	FHitResult result;
+	while (angleOffset < 45.f)
+	{
+		if (UKismetSystemLibrary::LineTraceSingle(
+			GetWorld(),
+			startPos,
+			startPos + DEMO_ENEMY_SIGHT_LENGTH * direction,
+			ETraceTypeQuery::TraceTypeQuery3,
+			true,
+			ignoreList,
+			EDrawDebugTrace::None,
+			result,
+			false
+		))
+		{
+			if (result.Actor->ActorHasTag("Player"))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Warning! Player is Exposed!"));
+				m_AIController->StopMovement();
+				GetWorldTimerManager().ClearTimer(m_IdleTimer);
+			}
+		}
+
+#if !UE_BUILD_SHIPPING 
+		DrawDebugLine(
+			GetWorld(),
+			startPos,
+			startPos + DEMO_ENEMY_SIGHT_LENGTH * direction,
+			FColor(0, 0, 255),
+			false, // sets weather or not the line is in the world permanently
+			1.f, 0,
+			1
+		);
+
+		UE_LOG(MyLog, Warning, TEXT("%s"), *direction.ToString());
+#endif
+
+		angleOffset += angleStep;
+		
+		direction = direction.RotateAngleAxis(angleStep, FRotationMatrix(rotation).GetUnitAxis(EAxis::Z));
+	}
 }
 
 // Called to bind functionality to input
@@ -55,16 +110,22 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AEnemy::OnReachDestination(FAIRequestID requestID, EPathFollowingResult::Type result)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Reach Destination: index %d"), m_ListIndex);
+
+#if !UE_BUILD_SHIPPING 
+	UE_LOG(MyLog, Warning, TEXT("Reach Destination: index %d"), m_ListIndex);
+#endif
+
 	//TODO: idle for a while and go to next position
-	FTimerHandle unusedHandler;
+
 	GetWorldTimerManager().SetTimer(
-		unusedHandler, 
+		m_IdleTimer, 
 		this, 
 		&AEnemy::MoveToNext,
 		FMath::RandRange(m_MinIdleTime, m_MaxIdleTime),
 		false
 	);
+
+	
 }
 
 void AEnemy::MoveToNext()
